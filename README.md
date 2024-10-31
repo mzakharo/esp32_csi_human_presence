@@ -48,10 +48,10 @@ CSI_DATA,101,a0:36:bc:36:c7:38,-43,11,-92,11,12720300,14,0,128,1,"[0,0,0,0,0,0,0
 Human presence detected! (Confidence: 0.55)
 ```
 
-## About detecting Human Presense
+## About detecting Human Presence
 
-* Human presense detection algorithm in python was generated using [Caude.ai](https://claude.ai/) and then converted to C to run on target using Claude.ai. 
-* The following prompt was used: `write an algorithm for real-time human presense detection from WiFi CSI signal consisting of 26 subcarriers at 10/s sampling frequency`
+* Human presence detection algorithm in python was generated using [Caude.ai](https://claude.ai/) and then converted to C to run on target using Claude.ai. 
+* The following prompt was used: `write an algorithm for real-time human presence detection from WiFi CSI signal consisting of 26 subcarriers at 10/s sampling frequency`
 * Follow-up prompts consisted of adding outlier rejection, and fixing run-time bugs from the resulting code.
 * This algorithm is not very robust to high levels of interference and may not work in all environments. If you are experiencing issues, try adjusting the confidence threshold, or using something else.
 
