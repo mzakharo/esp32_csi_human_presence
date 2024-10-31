@@ -1,11 +1,11 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-S2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- | -------- |
 
-# Human Presense Detector using WiFI CSI
+# Human Presence Detector using WiFI CSI
 
 Starts a task that sends NULL Data packets to the Access Point and receives ACKs
 
-CSI (Channel State Information) is extracted from the ACKs and resulting data stream is fed to a presense detection algorithm
+CSI (Channel State Information) is extracted from the ACKs and resulting data stream is fed to a presence detection algorithm
 
 Optionally, python `csi_data_parse_read.py -p PORT` can be used to visualize CSI data realtime
 
