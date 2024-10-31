@@ -1,0 +1,17 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "files.associations": {
+    "esp_chip_info.h": "c",
+    "esp_system.h": "c",
+    "task.h": "c",
+    "esp_attr.h": "c",
+    "mdet.h": "c",
+    "complex.h": "c"
+  },
+  "idf.adapterTargetName": "esp32c6",
+  "idf.portWin": "COM9",
+  "idf.flashType": "UART",
+  "idf.openOcdConfigs": [
+    "board/esp32s3-builtin.cfg"
+  ]
+}
