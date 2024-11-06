@@ -102,19 +102,26 @@ class csi_data_graphical_window(QWidget):
         for i in range(CSI_DATA_COLUMNS):
             self.curve_list[i].setData(csi_data_array[:, i])
 
+    def closeEvent(self,event):
+        print('Closing')
+        self.subthread.running = False
+        #self.subthread.terminate()
+        self.subthread.wait()
 
-def csi_data_read_parse(port: str, csv_writer, log_file_fd):
+def csi_data_read_parse(self, port: str, mat_writer):
     ser = serial.Serial(port=port, baudrate=115200,
                         bytesize=8, parity='N', stopbits=1)
     if ser.isOpen():
-        print("open success")
+        print("open success", mat_writer)
     else:
-        print("open failed")
+        print("open failed", mat_writer)
         return
     
     detector = mdet.CSIMagnitudeDetector()
+    self.running = True
 
-    while True:
+    csis = []
+    while self.running:
         strings = str(ser.readline())
         if not strings:
             break
@@ -167,39 +174,39 @@ def csi_data_read_parse(port: str, csv_writer, log_file_fd):
             x = np.squeeze(z[LEGACY_LLTF_MASK])
 
         x = x[:26]
+        if mat_writer is not None:
+            csis.append(x)
         y = np.abs(x)
 
         #pp.plot(y[:26])
 
         is_present, confidence = detector.detect_presence(y)
         if is_present:
-            print(f"Human presence detected! (Confidence: {confidence:.2f}, thresh: {detector.threshold:.2f})")
+            print(f"Human presence detected! (Confidence: {confidence:.2f}, thresh: {detector.threshold:.2f},  var: {detector.var:.2f},  corr: {detector.cor:.2f})")
         else:
-            print(f"No presence detected. (Confidence: {confidence:.2f}, thresh: {detector.threshold:.2f})")
+            print(f"No presence detected. (Confidence: {confidence:.2f}, thresh: {detector.threshold:.2f},  var: {detector.var:.2f},  corr: {detector.cor:.2f})")
 
         # Rotate data to the left
         csi_data_array[:-1] = csi_data_array[1:]
         csi_data_array[-1] = y
 
     ser.close()
+    if mat_writer is not None:
+        import scipy.io
+        scipy.io.savemat(mat_writer, dict(CSI=np.array(csis)))
     return
 
 
 class SubThread (QThread):
-    def __init__(self, serial_port, save_file_name, log_file_name):
+    def __init__(self, serial_port, save_file_name):
         super().__init__()
         self.serial_port = serial_port
-
-        #save_file_fd = open(save_file_name, 'w')
-        #self.log_file_fd = open(log_file_name, 'w')
-        self.csv_writer = None #csv.writer(save_file_fd)
-        #self.csv_writer.writerow(DATA_COLUMNS_NAMES)
-
+        self.save_file_name = save_file_name
     def run(self):
-        csi_data_read_parse(self.serial_port, None, None)
+        csi_data_read_parse(self, self.serial_port, self.save_file_name)
 
-    def __del__(self):
-        self.wait()
+    def __del__(self):        
+        print('here')
         #self.log_file_fd.close()
 
 
@@ -212,22 +219,21 @@ if __name__ == '__main__':
         description="Read CSI data from serial port and display it graphically")
     parser.add_argument('-p', '--port', dest='port', action='store', required=True,
                         help="Serial port number of csv_recv device")
-    parser.add_argument('-s', '--store', dest='store_file', action='store', default='./csi_data.csv',
+    parser.add_argument('-s', '--store', dest='store_file', action='store',
                         help="Save the data printed by the serial port to a file")
-    parser.add_argument('-l', '--log', dest="log_file", action="store", default="./csi_data_log.txt",
-                        help="Save other serial data the bad CSI data to a log file")
 
     args = parser.parse_args()
     serial_port = args.port
     file_name = args.store_file
-    log_file_name = args.log_file
 
     app = QApplication(sys.argv)
 
-    subthread = SubThread(serial_port, file_name, log_file_name)
-    subthread.start()
+
 
     window = csi_data_graphical_window()
+    window.subthread = SubThread(serial_port, file_name)
+    window.subthread.start()
+
     window.show()
 
     sys.exit(app.exec())
