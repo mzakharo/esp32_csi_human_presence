@@ -2,3 +2,5 @@ __pycache__
 /sdkconfig.old
 /sdkconfig
 /build
+/secrets.yaml
+/.esphome
