@@ -14,6 +14,8 @@
 #define WIFI_SSID     CONFIG_ESP_WIFI_SSID
 #define WIFI_PASS     CONFIG_ESP_WIFI_PASSWORD
 
+#define THRESH  0.60f
+
 static const char *TAG = "CSI";
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
@@ -101,9 +103,9 @@ static void wifi_csi_rx_cb(void *ctx, wifi_csi_info_t *info)
     int is_present = detect_presence(detector, magnitude_data, &confidence);
         
     if (is_present) {
-        printf("Human presence detected! (Confidence: %.2f)\n", confidence);
+        printf("Human presence detected! (Confidence: %.2f. thresh: %.2f, var: %.2f cor: %.2f)\n", confidence, THRESH, detector->var, detector->cor);
     } else {
-        printf("No presence detected. (Confidence: %.2f)\n", confidence);
+        printf("No presence detected. (Confidence: %.2f.  thresh: %.2f, var: %.2f cor: %.2f)\n", confidence, THRESH, detector->var, detector->cor);
     }
 }
 
@@ -147,6 +149,10 @@ void wifi_init_csi() {
 
 // Function to transmit a raw Wi-Fi frame
 void send_raw_frame() {
+
+    wifi_ap_record_t ap_info  = {0};
+    esp_wifi_sta_get_ap_info(&ap_info);
+
    typedef struct {
     uint8_t frame_control[2];
     uint16_t duration;
@@ -162,8 +168,8 @@ void send_raw_frame() {
         .sequence_control    = 0x0000,
     };
 
-    memcpy(null_data.destination_address, ap_bssid, 6);
-    memcpy(null_data.broadcast_address, ap_bssid, 6);
+    memcpy(null_data.destination_address, ap_info.bssid, 6);
+    memcpy(null_data.broadcast_address, ap_info.bssid, 6);
     memcpy(null_data.source_address, sta_mac, 6);
 
     // Transmit the raw frame
@@ -205,7 +211,7 @@ void wifi_init_sta() {
     
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, false, true, portMAX_DELAY);
     ESP_LOGI(TAG, "wifi_init_sta finished.");
-    detector = create_detector(WINDOW_SIZE, 0.42f);
+    detector = create_detector(WINDOW_SIZE, THRESH);
     wifi_init_csi();
 
 }

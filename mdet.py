@@ -1,8 +1,36 @@
 import numpy as np
 from collections import deque
 
+def hampel(x, k=7, t0=2.5):
+    """
+    Apply the Hampel filter to a 1D numpy array.
+    
+    Parameters:
+    x (numpy.ndarray): 1D input array
+    k (int): window size (default is 7)
+    t0 (float): threshold (default is 2.5)
+    
+    Returns:
+    numpy.ndarray: 1D array with outliers replaced
+    """
+    # Compute the median absolute deviation (MAD)
+    mad = np.median(np.abs(x - np.median(x)))
+    
+    # Compute the lower and upper threshold
+    lower = x - t0 * k * mad
+    upper = x + t0 * k * mad
+    
+    # Apply the filter
+    y = x.copy()
+    y[x < lower] = np.median(x)
+    y[x > upper] = np.median(x)
+    
+    return y
+
+
+
 class CSIMagnitudeDetector:
-    def __init__(self, window_size=50, threshold=0.42):
+    def __init__(self, window_size=50, threshold=0.60):
         """
         Initialize the CSI magnitude-based presence detector
         """
@@ -10,6 +38,8 @@ class CSIMagnitudeDetector:
         self.threshold = threshold
         self.num_subcarriers = 26
         self.epsilon = 1e-10  # Small constant for numerical stability
+
+        self.var = self.cor = 0
         
         # Buffers
         self.magnitude_buffer = deque(maxlen=window_size)
@@ -43,18 +73,16 @@ class CSIMagnitudeDetector:
         """
         # Reject outliers
         magnitude_cleaned = self.reject_outliers(magnitude_data)
+
+        #magnitude_cleaned = hampel(magnitude_cleaned)
         
         # Remove mean
-        magnitude_filtered = magnitude_cleaned - np.mean(magnitude_cleaned)
+        den = np.mean(magnitude_cleaned)
+        magnitude_filtered = magnitude_cleaned / den if den > self.epsilon else magnitude_cleaned
         
-        # Scale to unit variance with numerical stability
-        std_val = np.std(magnitude_filtered)
-        if std_val > self.epsilon:
-            magnitude_scaled = magnitude_filtered / std_val
-        else:
-            magnitude_scaled = magnitude_filtered
+       
             
-        return magnitude_scaled
+        return magnitude_filtered
     
     def extract_features(self, magnitude_window):
         """
@@ -67,11 +95,7 @@ class CSIMagnitudeDetector:
         features['temporal_variance'] = np.mean(temporal_var)        
         
         # Correlation between adjacent subcarriers
-        # Add small random noise to prevent singular correlation matrix
-        noisy_data = magnitude_window + np.random.normal(0, self.epsilon, magnitude_window.shape)
-        corr_matrix = np.corrcoef(noisy_data.T)
-        diag_indices = np.diag_indices_from(corr_matrix)
-        corr_matrix[diag_indices] = 1.0  # Ensure diagonal is 1
+        corr_matrix = np.corrcoef(magnitude_window.T)
         features['subcarrier_correlation'] = np.mean(np.diag(corr_matrix, k=1))
         
         return features
@@ -92,7 +116,7 @@ class CSIMagnitudeDetector:
         
         # Extract features and compute score
         features = self.extract_features(magnitude_window)
-        score = self._compute_detection_score(features)        
+        score, self.var, self.cor = self._compute_detection_score(features)      
         
         return score > self.threshold, score
     
@@ -101,12 +125,12 @@ class CSIMagnitudeDetector:
         Compute presence detection score from features
         """
         # Normalize features with numerical stability
-        norm_variance = np.clip(features['temporal_variance'] / 0.1, 0, 1)
+        norm_variance = np.clip(features['temporal_variance']/0.01, 0, 1)
         norm_correlation = np.clip(np.abs(features['subcarrier_correlation']), 0, 1)
         score = (0.4 * norm_variance + 
                 0.6 * norm_correlation)
         
-        return np.clip(score, 0, 1)
+        return np.clip(score, 0, 1), norm_variance, norm_correlation
     
 
 # Example usage

@@ -12,6 +12,8 @@ typedef struct {
     float threshold;
     int num_subcarriers;
     float epsilon;
+    float var;
+    float cor;
     CircularBuffer magnitude_buffer;
     CircularBuffer history_buffer;
 } CSIMagnitudeDetector;

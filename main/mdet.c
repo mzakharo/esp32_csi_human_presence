@@ -69,6 +69,8 @@ CSIMagnitudeDetector* create_detector(int window_size, float threshold) {
     detector->threshold = threshold;
     detector->num_subcarriers = NUM_SUBCARRIERS;
     detector->epsilon = EPSILON;
+    detector->var = 0;
+    detector->cor = 0;
     
     init_circular_buffer(&detector->magnitude_buffer, window_size);
     init_circular_buffer(&detector->history_buffer, HISTORY_SIZE);
@@ -126,15 +128,9 @@ void preprocess_magnitude(CSIMagnitudeDetector* detector, float* magnitude_data,
     
     // Remove mean
     float mag_mean = mean(cleaned, NUM_SUBCARRIERS);
-    for (int i = 0; i < NUM_SUBCARRIERS; i++) {
-        output[i] = cleaned[i] - mag_mean;
-    }
-    
-    // Scale to unit variance
-    float std_val = standard_deviation(output, NUM_SUBCARRIERS, 0.0f);
-    if (std_val > detector->epsilon) {
+    if (mag_mean > detector->epsilon) {
         for (int i = 0; i < NUM_SUBCARRIERS; i++) {
-            output[i] /= std_val;
+            output[i] = cleaned[i] / mag_mean;
         }
     }
 }
@@ -192,8 +188,6 @@ void extract_features(CSIMagnitudeDetector* detector, Features* features) {
             denom2 += val2 * val2;
         }
         
-        // Add small noise to prevent singular correlation matrix
-        numerator += detector->epsilon * ((float)rand() / RAND_MAX - 0.5f);
         denom1 = fmaxf(denom1, detector->epsilon);
         denom2 = fmaxf(denom2, detector->epsilon);
         
@@ -207,9 +201,11 @@ void extract_features(CSIMagnitudeDetector* detector, Features* features) {
 
 // [Rest of the code remains the same]
 
-float compute_detection_score(Features* features) {
-    float norm_variance = fminf(features->temporal_variance / 0.1f, 1.0f);
+float compute_detection_score(CSIMagnitudeDetector* detector, Features* features) {
+    float norm_variance = fminf(features->temporal_variance / 0.01f, 1.0f);
     float norm_correlation = fminf(fabsf(features->subcarrier_correlation), 1.0f);
+    detector->var = norm_variance;
+    detector->cor = norm_correlation;
     float score = 0.4f * norm_variance + 0.6f * norm_correlation;
     return fminf(fmaxf(score, 0.0f), 1.0f);
 }
@@ -226,7 +222,7 @@ int detect_presence(CSIMagnitudeDetector* detector, float* magnitude_data, float
     
     Features features;
     extract_features(detector, &features);
-    *confidence = compute_detection_score(&features);
+    *confidence = compute_detection_score(detector, &features);
     
     return *confidence > detector->threshold;
 }
