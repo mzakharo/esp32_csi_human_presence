@@ -9,9 +9,26 @@ CSI (Channel State Information) is extracted from the ACKs and resulting data st
 
 Optionally, python `csi_data_parse_read.py -p PORT` can be used to visualize CSI data realtime
 
-ESP32-S3 and ESP32-C6 were tested
+ESP32-S3 and ESP32-C6 were 
 
-### Configure the project
+### Building with ESPHome
+
+create secerts.yaml with the following contents:
+
+```
+wifi_ssid: "SSID"
+wifi_password: "PASSWORD"
+```
+
+On command line, install python & esphome. 
+`pip install esphome`
+
+Connect your board. Build and run the projcect. config defaults to `esp32-c6-devkitc-1`
+
+`esphome run sensor.yaml`
+
+
+### Configure the project natively
 
 CSI from ACK is supported in the following IDF versions: v5.2+, v5.1.3+, and v5.0.6+
 
