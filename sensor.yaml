@@ -1,0 +1,6 @@
+substitutions:
+  board: m5stack-atom
+  variant: esp32
+
+
+<<: !include base.yaml

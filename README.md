@@ -7,7 +7,7 @@ Starts a task that sends NULL Data packets to the Access Point and receives ACKs
 
 CSI (Channel State Information) is extracted from the ACKs and resulting data stream is fed to a presence detection algorithm
 
-Optionally, python `csi_data_parse_read.py -p PORT` can be used to visualize CSI data realtime from native project.
+Optionally, python `csi_data_parse_read.py -p PORT` can be used to visualize CSI data realtime from the native project.
 
 
 ### Building with ESPHome
@@ -23,15 +23,15 @@ wifi_password: "PASSWORD"
 On command line, install python & esphome. 
 `pip install esphome`
 
-Connect your board (`esp32-c6-devkitc-1` via UART port or `esp32-s3-devkitm-1` via USB port) 
+Connect your board ( port or) 
 
 Build and run the projcect:
 
-`esphome run sensor_c6.yaml`
 
-or
+* `esphome run sensor_c6.yaml`  for the ESP32-C6 `esp32-c6-devkitc-1` board connected via UART port (Best RF/CSI performance)
+* `esphome run sensor.yaml`  for the ESP32 `m5stack-atom` board 
+* `esphome run sensor_s3.yaml`  for the ESP32-S3 `esp32-s3-devkitm-1` board connected via USB port
 
-`esphome run sensor_s3.yaml`
 
 
 ### Configure the project natively
