@@ -11,6 +11,7 @@ Optionally, python `csi_data_parse_read.py -p PORT` can be used to visualize CSI
 
 
 ### Building with ESPHome
+![image](https://github.com/user-attachments/assets/4fc723b5-5666-4f03-90d2-78129445abaa)
 
 create secerts.yaml with the following contents:
 
