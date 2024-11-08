@@ -1,19 +1,12 @@
-substitutions:
-  name: csi
-  friendly_name: sensor CSI
+
 
 esphome:
-  name: ${name}
-  friendly_name: ${friendly_name}
+  name: csi
+  friendly_name: sensor CSI
+  name_add_mac_suffix: true
   project:
     name: esphome.csi-sensor
     version: "1.0"
-globals:
-  - id: threshold_val
-    type: float
-    restore_value: yes
-    initial_value: '0'
-
 
 external_components:
   # use all components from a local folder
@@ -22,8 +15,8 @@ external_components:
       path: components
 
 esp32:
-  board: esp32-c6-devkitc-1
-  variant: esp32c6
+  board: ${board}
+  variant: ${variant}
   framework:
     type: esp-idf
     #Can be dev, latest, recommended, or check https://github.com/espressif/esp-idf/releases

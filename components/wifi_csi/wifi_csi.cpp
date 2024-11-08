@@ -54,8 +54,8 @@ static void wifi_csi_rx_cb(void *ctx, wifi_csi_info_t *info)
         int offset = 2;
     #endif
     for (int i = offset; i < offset + 52; i=i+2) {  //we reject upper 26 subcarriers since data there is not stable
-        float __complex__ z = (float)info->buf[i] + (float)info->buf[i+1]*I;
-        magnitude_data[j] = cabsf(z);
+        std::complex<float> z((float)info->buf[i], (float)info->buf[i+1]);
+        magnitude_data[j] = std::abs(z);
         j++;
     }
     detect_presence(detector, magnitude_data, &confidence);

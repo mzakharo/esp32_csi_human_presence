@@ -1,0 +1,6 @@
+substitutions:
+  board: esp32-c6-devkitc-1
+  variant: esp32c6
+
+
+<<: !include base.yaml
